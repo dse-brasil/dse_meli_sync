@@ -22,7 +22,11 @@ async def meli_oauth_callback(
     """
     logger.info("Received OAuth callback from Mercado Livre.")
 
-    if not settings.MELI_CLIENT_ID or not settings.MELI_CLIENT_SECRET:
+    # Strip quotes that might be loaded literally by the docker-compose env_file parser
+    client_id = settings.MELI_CLIENT_ID.strip("'\"") if settings.MELI_CLIENT_ID else ""
+    client_secret = settings.MELI_CLIENT_SECRET.strip("'\"") if settings.MELI_CLIENT_SECRET else ""
+
+    if not client_id or not client_secret:
         logger.error("OAuth configuration missing: MELI_CLIENT_ID or MELI_CLIENT_SECRET not configured.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -40,8 +44,8 @@ async def meli_oauth_callback(
     # Payload requirements according to ML OAuth documentation
     payload = {
         "grant_type": "authorization_code",
-        "client_id": settings.MELI_CLIENT_ID,
-        "client_secret": settings.MELI_CLIENT_SECRET,
+        "client_id": client_id,
+        "client_secret": client_secret,
         "code": code,
         "redirect_uri": resolved_redirect_uri
     }
