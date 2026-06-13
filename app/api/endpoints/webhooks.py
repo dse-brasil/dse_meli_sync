@@ -18,9 +18,9 @@ def verify_meli_signature(payload_bytes: bytes, x_signature: str) -> bool:
     Verifies that the webhook payload is signed with the secret token.
     Uses SHA256 HMAC signature verification.
     """
-    if not settings.MELI_WEBHOOK_SIGNATURE_KEY:
-        # If no key is set, warning but allow (e.g. local testing)
-        logger.warning("MELI_WEBHOOK_SIGNATURE_KEY not configured. Skipping HMAC signature check.")
+    if not settings.MELI_WEBHOOK_SIGNATURE_KEY or "your-meli-webhook" in settings.MELI_WEBHOOK_SIGNATURE_KEY:
+        # If no key is set or using placeholder, warn and allow (local dev/testing)
+        logger.warning("MELI_WEBHOOK_SIGNATURE_KEY not configured or using default placeholder. Skipping HMAC signature check.")
         return True
 
     if not x_signature:
