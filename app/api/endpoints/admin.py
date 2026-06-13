@@ -1,6 +1,7 @@
 import logging
-from fastapi import APIRouter, Depends, status, Request
+from fastapi import APIRouter, Depends, status, Request, HTTPException
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -107,6 +108,65 @@ async def get_admin_products(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"Failed to fetch admin products: {str(e)}")
         return {"error": str(e)}
+
+class ProductSyncRequest(BaseModel):
+    item_id: str
+
+@router.post("/products", status_code=status.HTTP_201_CREATED)
+async def sync_or_add_product(
+    payload: ProductSyncRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Manually syncs or adds a product from Mercado Livre catalog to local database.
+    """
+    item_id = payload.item_id.strip()
+    if not item_id:
+        raise HTTPException(status_code=400, detail="Item ID cannot be empty.")
+    
+    try:
+        from app.services.meli_client import meli_client
+        product_data = await meli_client.get_item_details(item_id)
+        
+        stmt = select(Product).where(Product.id == item_id)
+        res = await db.execute(stmt)
+        db_product = res.scalar_one_or_none()
+        
+        if not db_product:
+            db_product = Product(
+                id=item_id,
+                title=product_data["title"],
+                price=product_data["price"],
+                permalink=product_data.get("permalink"),
+                status=product_data["status"],
+                stock=product_data.get("available_quantity", 0),
+                attributes=product_data.get("attributes", {})
+            )
+            db.add(db_product)
+        else:
+            db_product.title = product_data["title"]
+            db_product.price = product_data["price"]
+            db_product.permalink = product_data.get("permalink")
+            db_product.status = product_data["status"]
+            db_product.stock = product_data.get("available_quantity", 0)
+            db_product.attributes = product_data.get("attributes", {})
+            
+        await db.commit()
+        await db.refresh(db_product)
+        
+        return {
+            "message": "Produto sincronizado com sucesso!",
+            "product": {
+                "id": db_product.id,
+                "title": db_product.title,
+                "price": db_product.price,
+                "status": db_product.status,
+                "stock": db_product.stock
+            }
+        }
+    except Exception as e:
+        logger.error(f"Failed manual product sync for {item_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro de sincronizacao: {str(e)}")
 
 
 @router.get("/alerts", status_code=status.HTTP_200_OK)
@@ -1097,6 +1157,14 @@ async def serve_dashboard(request: Request):
                         <h3 class="card-title"><i class="fa-solid fa-cubes"></i> Catálogo de Produtos Espelhado</h3>
                         <span style="font-size: 13px; color: var(--text-secondary);">Sincronização via Webhooks</span>
                     </div>
+                    
+                    <div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: center; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--border-glass); flex-wrap: wrap;">
+                        <span style="font-size: 14px; font-weight: 600; color: var(--text-secondary);">Sincronizar Novo ID do Mercado Livre:</span>
+                        <input type="text" id="catalog-sync-id" class="chat-input" style="padding: 10px 16px; width: 220px; font-size: 13px; margin: 0;" placeholder="Ex: MLB999888777">
+                        <button class="btn btn-primary" onclick="syncProductFromUI()" style="padding: 10px 18px; font-size: 13px; cursor: pointer;">
+                            <i class="fa-solid fa-rotate"></i> Sincronizar Produto
+                        </button>
+                    </div>
                     <div class="table-container">
                         <table>
                             <thead>
@@ -1326,6 +1394,35 @@ async def serve_dashboard(request: Request):
                 });
             } catch (err) {
                 console.error("Error fetching products:", err);
+            }
+        }
+
+        // Manually sync product from UI
+        async function syncProductFromUI() {
+            const input = document.getElementById('catalog-sync-id');
+            const itemId = input.value.trim();
+            if (!itemId) {
+                alert("Por favor, digite um ID do Mercado Livre.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_id: itemId })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message || "Produto sincronizado!");
+                    input.value = '';
+                    loadAllData();
+                } else {
+                    alert("Erro ao sincronizar: " + (data.detail || "Erro desconhecido"));
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
             }
         }
 
