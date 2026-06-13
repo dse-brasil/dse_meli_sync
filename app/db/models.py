@@ -2,9 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, DateTime, Float, Integer, JSON
 from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import declarative_base
-
-Base = declarative_base()
+from app.db.session import Base
 
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"

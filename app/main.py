@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.router import api_router
 from app.db.session import engine, Base
+from app.db.models import WebhookEvent, Conversation, Product
 from app.core.security import get_decrypted_master_prompt
 
 # Setup Logging
