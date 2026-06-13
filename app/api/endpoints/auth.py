@@ -36,6 +36,11 @@ async def meli_oauth_callback(
     # Resolve redirect_uri dynamically based on the request URL
     # This automatically matches ngrok or staging domains (e.g. https://.../api/v1/auth/meli/callback)
     resolved_redirect_uri = str(request.url).split("?")[0]
+    
+    # If using ngrok or behind an HTTPS proxy/load balancer, force https scheme to avoid mismatch
+    if "ngrok" in resolved_redirect_uri or request.headers.get("x-forwarded-proto") == "https":
+        resolved_redirect_uri = resolved_redirect_uri.replace("http://", "https://")
+        
     logger.info(f"Resolved dynamic redirect_uri: {resolved_redirect_uri}")
 
     # Mercado Livre Token Exchange endpoint
