@@ -49,7 +49,8 @@ class AIService:
         """
         Calls the Google Gemini API with system instructions.
         """
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.LLM_MODEL}:generateContent?key={settings.LLM_API_KEY}"
+        model_name = settings.LLM_MODEL.strip("'\"")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={settings.LLM_API_KEY}"
         
         # Build contents from history
         contents = []
@@ -113,8 +114,9 @@ class AIService:
         context_str = f"Contexto do Produto:\n{str(product_context)}\n\nPergunta do Comprador:\n{user_question}"
         messages.append({"role": "user", "content": context_str})
 
+        model_name = settings.LLM_MODEL.strip("'\"") if settings.LLM_MODEL else "gpt-4-turbo"
         payload = {
-            "model": settings.LLM_MODEL or "gpt-4-turbo",
+            "model": model_name,
             "messages": messages,
             "temperature": 0.3,
             "max_tokens": 400
