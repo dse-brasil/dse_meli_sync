@@ -1,6 +1,6 @@
 import logging
 import httpx
-from fastapi import APIRouter, HTTPException, Query, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -12,6 +12,7 @@ router = APIRouter()
 
 @router.get("/meli/callback", status_code=status.HTTP_200_OK)
 async def meli_oauth_callback(
+    request: Request,
     code: str = Query(..., description="Authorization code returned by Mercado Livre"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -28,6 +29,11 @@ async def meli_oauth_callback(
             detail="OAuth credentials are not configured on the server."
         )
 
+    # Resolve redirect_uri dynamically based on the request URL
+    # This automatically matches ngrok or staging domains (e.g. https://.../api/v1/auth/meli/callback)
+    resolved_redirect_uri = str(request.url).split("?")[0]
+    logger.info(f"Resolved dynamic redirect_uri: {resolved_redirect_uri}")
+
     # Mercado Livre Token Exchange endpoint
     url = "https://api.mercadolibre.com/oauth/token"
     
@@ -37,7 +43,7 @@ async def meli_oauth_callback(
         "client_id": settings.MELI_CLIENT_ID,
         "client_secret": settings.MELI_CLIENT_SECRET,
         "code": code,
-        "redirect_uri": f"https://{settings.MELI_CLIENT_ID}.ngrok-free.app/api/v1/auth/meli/callback"  # Placeholder/dynamic fallback
+        "redirect_uri": resolved_redirect_uri
     }
 
     # Dynamically resolve redirect_uri using host request header if needed, 
