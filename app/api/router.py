@@ -1,3 +1,4 @@
+from fastapi import APIRouter
 from app.api.endpoints import webhooks, chat, auth, admin
 
 api_router = APIRouter()
