@@ -220,10 +220,10 @@ async def serve_dashboard(request: Request):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DSE Meli Sync - Painel Administrativo</title>
     
-    <!-- Google Fonts Inter -->
+    <!-- Google Fonts Inter & Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- FontAwesome for Premium Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -348,7 +348,7 @@ async def serve_dashboard(request: Request):
             list-style: none;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             flex: 1;
         }
 
@@ -356,7 +356,7 @@ async def serve_dashboard(request: Request):
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 14px 18px;
+            padding: 12px 18px;
             border-radius: 12px;
             cursor: pointer;
             color: var(--text-secondary);
@@ -481,6 +481,17 @@ async def serve_dashboard(request: Request):
             box-shadow: 0 0 18px var(--accent-primary-glow);
         }
 
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.1);
+            border-color: rgba(244, 63, 94, 0.3);
+            color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.2);
+            border-color: var(--danger);
+            box-shadow: 0 0 12px rgba(244, 63, 94, 0.2);
+        }
+
         /* Main Workspace Content */
         .workspace {
             flex: 1;
@@ -503,19 +514,19 @@ async def serve_dashboard(request: Request):
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Dashboard Overview Grid */
+        /* Grid layouts */
         .grid-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
 
         .stat-card {
             background: var(--bg-glass);
             border: 1px solid var(--border-glass);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -530,7 +541,7 @@ async def serve_dashboard(request: Request):
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 800;
             background: linear-gradient(to right, #ffffff, #e9d5ff);
             -webkit-background-clip: text;
@@ -539,7 +550,7 @@ async def serve_dashboard(request: Request):
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
             text-transform: uppercase;
@@ -547,37 +558,41 @@ async def serve_dashboard(request: Request):
         }
 
         .stat-icon {
-            width: 54px;
-            height: 54px;
+            width: 50px;
+            height: 50px;
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
+            font-size: 20px;
         }
 
-        .stat-icon.purple {
-            background: rgba(139, 92, 246, 0.15);
-            color: var(--accent-primary);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: var(--accent-primary); border: 1px solid rgba(139, 92, 246, 0.3); }
+        .stat-icon.cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-secondary); border: 1px solid rgba(6, 182, 212, 0.3); }
+        .stat-icon.green { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .stat-icon.red { background: rgba(244, 63, 94, 0.15); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
 
-        .stat-icon.cyan {
-            background: rgba(6, 182, 212, 0.15);
-            color: var(--accent-secondary);
-            border: 1px solid rgba(6, 182, 212, 0.3);
+        /* Progress Bar for Goal progress */
+        .progress-wrapper {
+            margin-top: 12px;
+            width: 100%;
         }
-
-        .stat-icon.green {
-            background: rgba(16, 105, 129, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
         }
-
-        .stat-icon.red {
-            background: rgba(244, 63, 94, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(244, 63, 94, 0.3);
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            border-radius: 6px;
+            box-shadow: 0 0 8px var(--accent-primary-glow);
+            transition: width 1s ease-out;
         }
 
         /* Glass Cards Layout */
@@ -585,7 +600,7 @@ async def serve_dashboard(request: Request):
             background: var(--bg-glass);
             border: 1px solid var(--border-glass);
             border-radius: 20px;
-            padding: 30px;
+            padding: 24px;
             backdrop-filter: blur(10px);
             margin-bottom: 24px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
@@ -595,7 +610,7 @@ async def serve_dashboard(request: Request):
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .card-title {
@@ -610,7 +625,45 @@ async def serve_dashboard(request: Request):
             color: var(--accent-secondary);
         }
 
-        /* Styled Tables */
+        /* Forms Styling */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .form-input, select.form-input {
+            width: 100%;
+            background: #05070d;
+            border: 1px solid var(--border-glass);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-primary-glow);
+        }
+
+        /* Tables */
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -623,8 +676,8 @@ async def serve_dashboard(request: Request):
         }
 
         th {
-            padding: 16px 20px;
-            font-size: 13px;
+            padding: 14px 18px;
+            font-size: 12px;
             color: var(--text-secondary);
             font-weight: 600;
             text-transform: uppercase;
@@ -633,7 +686,7 @@ async def serve_dashboard(request: Request):
         }
 
         td {
-            padding: 18px 20px;
+            padding: 16px 18px;
             font-size: 14px;
             border-bottom: 1px solid rgba(255,255,255,0.04);
             color: var(--text-primary);
@@ -658,7 +711,7 @@ async def serve_dashboard(request: Request):
         .badge-warning { background: rgba(245, 158, 11, 0.12); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
         .badge-info { background: rgba(6, 182, 212, 0.12); color: var(--accent-secondary); border: 1px solid rgba(6, 182, 212, 0.3); }
 
-        /* JSON Modal Inspector */
+        /* Modals */
         .modal {
             display: none;
             position: fixed;
@@ -788,13 +841,8 @@ async def serve_dashboard(request: Request):
             to { transform: translateY(0); opacity: 1; }
         }
 
-        .msg.buyer {
-            align-self: flex-start;
-        }
-
-        .msg.agent {
-            align-self: flex-end;
-        }
+        .msg.buyer { align-self: flex-start; }
+        .msg.agent { align-self: flex-end; }
 
         .msg-bubble {
             padding: 16px 20px;
@@ -825,13 +873,8 @@ async def serve_dashboard(request: Request):
             gap: 8px;
         }
 
-        .msg.buyer .msg-meta {
-            justify-content: flex-start;
-        }
-
-        .msg.agent .msg-meta {
-            justify-content: flex-end;
-        }
+        .msg.buyer .msg-meta { justify-content: flex-start; }
+        .msg.agent .msg-meta { justify-content: flex-end; }
 
         .chat-input-area {
             padding: 24px;
@@ -859,7 +902,6 @@ async def serve_dashboard(request: Request):
             box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
         }
 
-        /* Security Scanner Alert overlay in chat */
         .security-scan-indicator {
             font-size: 12px;
             color: var(--success);
@@ -914,6 +956,12 @@ async def serve_dashboard(request: Request):
                 </li>
                 <li class="menu-item" onclick="switchTab('catalog', this)">
                     <i class="fa-solid fa-boxes-stacked"></i> Catálogo Synced
+                </li>
+                <li class="menu-item" onclick="switchTab('manual', this)" style="border-top: 1px solid var(--border-glass); margin-top: 10px; border-radius: 0; padding-top: 15px;">
+                    <i class="fa-solid fa-file-signature"></i> Cadastro Manual
+                </li>
+                <li class="menu-item" onclick="switchTab('analytics', this)">
+                    <i class="fa-solid fa-chart-line"></i> Analytics Estoque
                 </li>
             </ul>
         </div>
@@ -1185,6 +1233,301 @@ async def serve_dashboard(request: Request):
                 </div>
             </div>
 
+            <!-- VIEW: CADASTRO MANUAL (NEW!) -->
+            <div id="panel-manual" class="view-panel">
+                
+                <!-- Supplier Form & List Section -->
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Supplier Form -->
+                    <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-handshake"></i> Novo Fornecedor</h3>
+                        </div>
+                        <form id="supplier-form" onsubmit="event.preventDefault(); submitSupplier();" style="display: flex; flex-direction: column; gap: 14px;">
+                            <div class="form-group">
+                                <label for="sup-name">Razão Social / Nome</label>
+                                <input type="text" id="sup-name" class="form-input" placeholder="Ex: Distribuidora DSE Ltda" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sup-contact">Contato (E-mail/Telefone)</label>
+                                <input type="text" id="sup-contact" class="form-input" placeholder="Ex: contato@dse.com.br">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top: 10px; justify-content: center;">
+                                <i class="fa-solid fa-plus"></i> Cadastrar Fornecedor
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Supplier List -->
+                    <div class="glass-card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-list-check"></i> Fornecedores Cadastrados</h3>
+                        </div>
+                        <div class="table-container" style="flex: 1; max-height: 180px; overflow-y: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Contato</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supplier-table-body">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Manual Form -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fa-solid fa-barcode"></i> Novo Produto Manual</h3>
+                        <span style="font-weight: 700; color: var(--accent-secondary);" id="calc-total-preview">Total Estimado: R$ 0,00</span>
+                    </div>
+                    <form id="manual-product-form" onsubmit="event.preventDefault(); submitManualProduct();">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="prod-barcode">Código de Barras</label>
+                                <input type="text" id="prod-barcode" class="form-input" placeholder="Ex: 789100010001" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-reference">Referência / SKU</label>
+                                <input type="text" id="prod-reference" class="form-input" placeholder="Ex: REF-1002">
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-supplier">Fornecedor</label>
+                                <select id="prod-supplier" class="form-input" required>
+                                    <option value="">Selecione um fornecedor...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-category">Categoria</label>
+                                <input type="text" id="prod-category" class="form-input" placeholder="Ex: Eletronicos" required>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="prod-subcategory">Subcategoria</label>
+                                <input type="text" id="prod-subcategory" class="form-input" placeholder="Ex: Smartphones">
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-quantity">Quantidade</label>
+                                <input type="number" id="prod-quantity" class="form-input" value="1" min="1" oninput="updateTotalPreview()" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-unit-value">Valor Unitário (R$)</label>
+                                <input type="number" id="prod-unit-value" class="form-input" step="0.01" value="0.00" min="0.00" oninput="updateTotalPreview()" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-discount">Desconto Total (R$)</label>
+                                <input type="number" id="prod-discount" class="form-input" step="0.01" value="0.00" min="0.00" oninput="updateTotalPreview()">
+                            </div>
+                        </div>
+
+                        <div class="form-grid" style="grid-template-columns: 1fr 2fr;">
+                            <div class="form-group">
+                                <label for="prod-price-type">Tipo de Preço</label>
+                                <select id="prod-price-type" class="form-input" onchange="updateTotalPreview()" required>
+                                    <option value="normal">Normal</option>
+                                    <option value="consignado">Consignado</option>
+                                    <option value="brinde">Brinde</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="prod-description">Descrição do Produto</label>
+                                <input type="text" id="prod-description" class="form-input" placeholder="Ex: Smartphone DSE Pro 128GB" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px;">
+                            <i class="fa-solid fa-check"></i> Cadastrar Produto no Estoque
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Manual Products List -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fa-solid fa-clipboard-list"></i> Produtos no Estoque Manual</h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cód. Barras</th>
+                                    <th>Referência</th>
+                                    <th>Descrição</th>
+                                    <th>Qtd.</th>
+                                    <th>V. Unitário</th>
+                                    <th>Desconto</th>
+                                    <th>Total</th>
+                                    <th>Tipo Preço</th>
+                                    <th>Fornecedor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manual-products-table-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ANALYTICS (NEW!) -->
+            <div id="panel-analytics" class="view-panel">
+                
+                <!-- Target Settings Row -->
+                <div class="glass-card" style="padding: 16px 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i class="fa-solid fa-sliders" style="color: var(--accent-secondary);"></i>
+                            <h4 style="font-weight: 700; font-size: 16px;">Metas e Créditos Corporativos</h4>
+                        </div>
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="cfg-meta" style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">META VENDAS (R$):</label>
+                                <input type="number" id="cfg-meta" class="form-input" style="padding: 8px 12px; width: 140px; margin: 0; font-size: 13px;" value="10000">
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="cfg-credits" style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">CRÉDITOS (R$):</label>
+                                <input type="number" id="cfg-credits" class="form-input" style="padding: 8px 12px; width: 140px; margin: 0; font-size: 13px;" value="5000">
+                            </div>
+                            <button class="btn btn-primary" onclick="saveSystemConfig()" style="padding: 8px 16px; font-size: 13px;">
+                                <i class="fa-solid fa-save"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics KPIs -->
+                <div class="grid-stats">
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Qtd Total Itens</span>
+                            <div class="stat-value" id="analytics-total-qty">0</div>
+                        </div>
+                        <div class="stat-icon purple">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Valor Total (Net)</span>
+                            <div class="stat-value" id="analytics-total-val" style="color: var(--success);">R$ 0,00</div>
+                        </div>
+                        <div class="stat-icon green">
+                            <i class="fa-solid fa-money-bill-trend-up"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Descontos Aplicados</span>
+                            <div class="stat-value" id="analytics-total-discount" style="color: var(--warning);">R$ 0,00</div>
+                        </div>
+                        <div class="stat-icon yellow">
+                            <i class="fa-solid fa-tags"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Créditos Ativos</span>
+                            <div class="stat-value" id="analytics-credits" style="color: var(--accent-secondary);">R$ 0,00</div>
+                        </div>
+                        <div class="stat-icon cyan">
+                            <i class="fa-solid fa-hand-holding-dollar"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meta Progress Card -->
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span class="stat-label" style="font-weight: 700;">Acompanhamento de Meta de Estoque / Vendas</span>
+                        <span id="analytics-meta-progress-text" style="font-weight: 700; color: var(--accent-secondary);">0% atingido</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                        <span>Atual: <strong id="analytics-meta-current" style="color: white;">R$ 0,00</strong></span>
+                        <span>Meta Alvo: <strong id="analytics-meta-target" style="color: white;">R$ 0,00</strong></span>
+                    </div>
+                    <div class="progress-wrapper">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="analytics-meta-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Distributions layout -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+                    <!-- Category table -->
+                    <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-layer-group"></i> Distribuição por Categoria</h3>
+                        </div>
+                        <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Categoria</th>
+                                        <th>Qtd. Itens</th>
+                                        <th>Valor Acumulado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-category-tbody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Subcategory table -->
+                    <div class="glass-card" style="margin-bottom: 0;">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fa-solid fa-network-wired"></i> Distribuição por Subcategoria</h3>
+                        </div>
+                        <div class="table-container" style="max-height: 250px; overflow-y: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Subcategoria</th>
+                                        <th>Qtd. Itens</th>
+                                        <th>Valor Acumulado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="analytics-subcategory-tbody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Type distribution -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fa-solid fa-receipt"></i> Métricas por Tipo de Preço</h3>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Preço</th>
+                                    <th>Qtd. Itens</th>
+                                    <th>Valor Total Liquido</th>
+                                    <th>Participação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-type-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </div>
 
@@ -1224,9 +1567,18 @@ async def serve_dashboard(request: Request):
                 'webhooks': 'Monitor de Webhooks',
                 'security': 'Central de Segurança e Guardrails',
                 'simulator': 'AI Chat Simulator (Vendedor)',
-                'catalog': 'Catálogo de Produtos'
+                'catalog': 'Catálogo de Produtos',
+                'manual': 'Cadastro Manual de Itens e Fornecedores',
+                'analytics': 'Métricas e Analytics do Estoque'
             };
             document.getElementById('panel-title').innerText = titles[tabId];
+            
+            // Reload specific tab data
+            if (tabId === 'manual') {
+                loadManualTabData();
+            } else if (tabId === 'analytics') {
+                loadAnalyticsTabData();
+            }
         }
 
         // Fetch Stats
@@ -1397,35 +1749,6 @@ async def serve_dashboard(request: Request):
             }
         }
 
-        // Manually sync product from UI
-        async function syncProductFromUI() {
-            const input = document.getElementById('catalog-sync-id');
-            const itemId = input.value.trim();
-            if (!itemId) {
-                alert("Por favor, digite um ID do Mercado Livre.");
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/admin/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ item_id: itemId })
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    alert(data.message || "Produto sincronizado!");
-                    input.value = '';
-                    loadAllData();
-                } else {
-                    alert("Erro ao sincronizar: " + (data.detail || "Erro desconhecido"));
-                }
-            } catch (err) {
-                alert("Erro ao se conectar com o servidor.");
-            }
-        }
-
         // Send chat simulator message
         async function sendChatMessage() {
             const input = document.getElementById('chat-user-input');
@@ -1542,12 +1865,378 @@ async def serve_dashboard(request: Request):
             document.getElementById('json-modal').style.display = 'none';
         }
 
+        // Sync product from ML catalog
+        async function syncProductFromUI() {
+            const input = document.getElementById('catalog-sync-id');
+            const itemId = input.value.trim();
+            if (!itemId) {
+                alert("Por favor, digite um ID do Mercado Livre.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v1/admin/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_id: itemId })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message || "Produto sincronizado!");
+                    input.value = '';
+                    loadAllData();
+                } else {
+                    alert("Erro ao sincronizar: " + (data.detail || "Erro desconhecido"));
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
+            }
+        }
+
+
+        // ==========================================
+        // --- NEW! MANUAL PRODUCTS & SUPPLIERS JS ---
+        // ==========================================
+
+        // Calculate and update the estimated total value dynamically in form
+        function updateTotalPreview() {
+            const qty = parseInt(document.getElementById('prod-quantity').value) || 0;
+            const unitVal = parseFloat(document.getElementById('prod-unit-value').value) || 0.0;
+            const discount = parseFloat(document.getElementById('prod-discount').value) || 0.0;
+            const priceType = document.getElementById('prod-price-type').value;
+
+            let total = 0.0;
+            if (priceType === 'brinde') {
+                total = 0.0;
+                document.getElementById('prod-unit-value').disabled = true;
+                document.getElementById('prod-discount').disabled = true;
+            } else {
+                document.getElementById('prod-unit-value').disabled = false;
+                document.getElementById('prod-discount').disabled = false;
+                total = (qty * unitVal) - discount;
+                if (total < 0.0) total = 0.0;
+            }
+
+            document.getElementById('calc-total-preview').innerText = `Total Estimado: R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        }
+
+        // Fetch Suppliers
+        async function fetchSuppliers() {
+            try {
+                const response = await fetch('/api/v1/manual-products/suppliers');
+                const suppliers = await response.json();
+                
+                const tableBody = document.getElementById('supplier-table-body');
+                const selectElement = document.getElementById('prod-supplier');
+                
+                tableBody.innerHTML = '';
+                // Keep the default first option in the select dropdown
+                selectElement.innerHTML = '<option value="">Selecione um fornecedor...</option>';
+
+                if (suppliers.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-secondary);">Nenhum fornecedor cadastrado.</td></tr>';
+                    return;
+                }
+
+                suppliers.forEach(item => {
+                    const row = `
+                        <tr>
+                            <td style="font-weight: 600;">${item.name}</td>
+                            <td style="color: var(--text-secondary); font-size: 13px;">${item.contact || 'Sem contato'}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+
+                    // Append to form dropdown select
+                    selectElement.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+                });
+            } catch (err) {
+                console.error("Error fetching suppliers:", err);
+            }
+        }
+
+        // Submit Supplier
+        async function submitSupplier() {
+            const nameInput = document.getElementById('sup-name');
+            const contactInput = document.getElementById('sup-contact');
+            
+            const payload = {
+                name: nameInput.value.trim(),
+                contact: contactInput.value.trim() || null
+            };
+
+            try {
+                const response = await fetch('/api/v1/manual-products/suppliers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    nameInput.value = '';
+                    contactInput.value = '';
+                    await fetchSuppliers();
+                } else {
+                    const err = await response.json();
+                    alert("Erro ao cadastrar fornecedor: " + (err.detail || "Erro de rede"));
+                }
+            } catch (err) {
+                alert("Erro ao comunicar com o servidor.");
+            }
+        }
+
+        // Fetch Manual Products
+        async function fetchManualProducts() {
+            try {
+                const response = await fetch('/api/v1/manual-products');
+                const products = await response.json();
+                const tbody = document.getElementById('manual-products-table-body');
+                tbody.innerHTML = '';
+
+                if (products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum produto cadastrado manualmente no estoque.</td></tr>';
+                    return;
+                }
+
+                products.forEach(item => {
+                    const typeBadge = item.price_type === 'consignado' ? 'badge-info' : (item.price_type === 'brinde' ? 'badge-warning' : 'badge-success');
+                    
+                    const row = `
+                        <tr>
+                            <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">${item.barcode}</td>
+                            <td style="font-family: monospace; font-size: 12px;">${item.reference || '-'}</td>
+                            <td style="font-weight: 500;">${item.description}</td>
+                            <td><strong>${item.quantity}</strong></td>
+                            <td>R$ ${item.unit_value.toFixed(2)}</td>
+                            <td style="color: var(--danger);">R$ ${item.discount.toFixed(2)}</td>
+                            <td style="color: var(--success); font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
+                            <td><span class="badge ${typeBadge}">${item.price_type.toUpperCase()}</span></td>
+                            <td style="color: var(--text-secondary); font-size: 13px;">${item.supplier_name}</td>
+                            <td>
+                                <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="deleteManualProduct('${item.id}')">
+                                    <i class="fa-solid fa-trash"></i> Excluir
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (err) {
+                console.error("Error fetching manual products:", err);
+            }
+        }
+
+        // Submit Manual Product
+        async function submitManualProduct() {
+            const barcode = document.getElementById('prod-barcode').value.trim();
+            const reference = document.getElementById('prod-reference').value.trim();
+            const supplierId = document.getElementById('prod-supplier').value;
+            const category = document.getElementById('prod-category').value.trim();
+            const subcategory = document.getElementById('prod-subcategory').value.trim();
+            const quantity = parseInt(document.getElementById('prod-quantity').value) || 0;
+            const unitValue = parseFloat(document.getElementById('prod-unit-value').value) || 0.0;
+            const discount = parseFloat(document.getElementById('prod-discount').value) || 0.0;
+            const priceType = document.getElementById('prod-price-type').value;
+            const description = document.getElementById('prod-description').value.trim();
+
+            if (!supplierId) {
+                alert("Por favor, selecione um Fornecedor cadastrado.");
+                return;
+            }
+
+            const payload = {
+                barcode: barcode,
+                reference: reference || null,
+                supplier_id: supplierId,
+                category: category,
+                subcategory: subcategory || null,
+                quantity: quantity,
+                unit_value: unitValue,
+                discount: discount,
+                price_type: priceType,
+                description: description
+            };
+
+            try {
+                const response = await fetch('/api/v1/manual-products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    // Reset form
+                    document.getElementById('manual-product-form').reset();
+                    updateTotalPreview();
+                    await fetchManualProducts();
+                } else {
+                    const err = await response.json();
+                    alert("Erro ao cadastrar produto: " + (err.detail || "Erro de rede"));
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
+            }
+        }
+
+        // Delete Manual Product
+        async function deleteManualProduct(productId) {
+            if (!confirm("Tem certeza de que deseja excluir este produto do estoque manual?")) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/manual-products/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await fetchManualProducts();
+                } else {
+                    const err = await response.json();
+                    alert("Erro ao excluir produto: " + (err.detail || "Erro de rede"));
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
+            }
+        }
+
+        // Load config
+        async function fetchSystemConfig() {
+            try {
+                const response = await fetch('/api/v1/manual-products/config');
+                const data = await response.json();
+                
+                document.getElementById('cfg-meta').value = data.meta;
+                document.getElementById('cfg-credits').value = data.credits;
+            } catch (err) {
+                console.error("Error fetching configs:", err);
+            }
+        }
+
+        // Save system config (credits / meta)
+        async function saveSystemConfig() {
+            const meta = parseFloat(document.getElementById('cfg-meta').value) || 0.0;
+            const credits = parseFloat(document.getElementById('cfg-credits').value) || 0.0;
+
+            const payload = { meta: meta, credits: credits };
+
+            try {
+                const response = await fetch('/api/v1/manual-products/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert("Configurações atualizadas!");
+                    await loadAnalyticsTabData();
+                } else {
+                    alert("Falha ao salvar as configurações.");
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
+            }
+        }
+
+        // Load and compile advanced metrics
+        async function loadAnalyticsTabData() {
+            await fetchSystemConfig();
+            
+            try {
+                const response = await fetch('/api/v1/manual-products/analytics');
+                const data = await response.json();
+                
+                // Set summary numbers
+                document.getElementById('analytics-total-qty').innerText = data.summary.total_quantity;
+                document.getElementById('analytics-total-val').innerText = `R$ ${data.summary.total_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('analytics-total-discount').innerText = `R$ ${data.summary.total_discount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('analytics-credits').innerText = `R$ ${data.summary.credits.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                
+                // Meta Tracking text
+                document.getElementById('analytics-meta-progress-text').innerText = `${data.summary.meta_progress_percentage}% atingido`;
+                document.getElementById('analytics-meta-current').innerText = `R$ ${data.summary.total_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('analytics-meta-target').innerText = `R$ ${data.summary.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                
+                // Progress Bar fill
+                const progressFill = Math.min(data.summary.meta_progress_percentage, 100);
+                document.getElementById('analytics-meta-progress-bar').style.width = `${progressFill}%`;
+
+                // Render Categories distribution Table
+                const catTbody = document.getElementById('analytics-category-tbody');
+                catTbody.innerHTML = '';
+                if (data.by_category.length === 0) {
+                    catTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Sem dados de categoria.</td></tr>';
+                } else {
+                    data.by_category.forEach(item => {
+                        catTbody.innerHTML += `
+                            <tr>
+                                <td style="font-weight: 600;">${item.category}</td>
+                                <td>${item.quantity} itens</td>
+                                <td style="color: var(--accent-secondary); font-weight: 600;">R$ ${item.total_value.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Render Subcategories distribution Table
+                const subTbody = document.getElementById('analytics-subcategory-tbody');
+                subTbody.innerHTML = '';
+                if (data.by_subcategory.length === 0) {
+                    subTbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-secondary);">Sem dados de subcategoria.</td></tr>';
+                } else {
+                    data.by_subcategory.forEach(item => {
+                        subTbody.innerHTML += `
+                            <tr>
+                                <td style="font-weight: 600;">${item.subcategory}</td>
+                                <td>${item.quantity} itens</td>
+                                <td style="color: var(--accent-secondary); font-weight: 600;">R$ ${item.total_value.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Render Price Type distribution Table
+                const typeTbody = document.getElementById('analytics-type-tbody');
+                typeTbody.innerHTML = '';
+                if (data.by_price_type.length === 0) {
+                    typeTbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">Sem dados de tipo de preço.</td></tr>';
+                } else {
+                    data.by_price_type.forEach(item => {
+                        const totalStockVal = data.summary.total_value;
+                        const percentage = totalStockVal > 0.0 ? ((item.total_value / totalStockVal) * 100.0).toFixed(1) + '%' : '0.0%';
+                        const badgeColor = item.price_type === 'consignado' ? 'badge-info' : (item.price_type === 'brinde' ? 'badge-warning' : 'badge-success');
+
+                        typeTbody.innerHTML += `
+                            <tr>
+                                <td><span class="badge ${badgeColor}">${item.price_type.toUpperCase()}</span></td>
+                                <td><strong>${item.quantity} unidades</strong></td>
+                                <td style="color: var(--success); font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
+                                <td style="font-weight: 600;">${percentage}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+            } catch (err) {
+                console.error("Error loading analytics data:", err);
+            }
+        }
+
+        // Helper to load all manual tab data
+        function loadManualTabData() {
+            fetchSuppliers();
+            fetchManualProducts();
+        }
+
         // Load all data
         function loadAllData() {
             fetchStats();
             fetchWebhooks();
             fetchAlerts();
             fetchCatalog();
+            loadManualTabData();
+            loadAnalyticsTabData();
         }
 
         // Initialize on load

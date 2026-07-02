@@ -18,6 +18,7 @@ celery_app.conf.update(
     enable_utc=True,
     task_track_started=True,
     task_time_limit=300,  # 5 minutes max per task
+    task_always_eager=settings.CELERY_ALWAYS_EAGER,
 )
 
 # Autodiscover tasks from the app/tasks directory

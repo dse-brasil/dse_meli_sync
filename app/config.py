@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     # Celery & Redis
     CELERY_BROKER_URL: str = "redis://redis:6379/0"
     CELERY_RESULT_BACKEND: str = "redis://redis:6379/0"
+    CELERY_ALWAYS_EAGER: bool = False
 
     # Security & Cryptography
     PROMPT_DECRYPTION_KEY: str = ""
