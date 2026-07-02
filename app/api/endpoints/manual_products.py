@@ -28,6 +28,7 @@ class ManualProductCreate(BaseModel):
     price_type: str = Field("normal", description="Tipo de preco: consignado, brinde, normal")
     category: str = Field(..., description="Categoria")
     subcategory: Optional[str] = Field(None, description="Subcategoria")
+    warranty_months: int = Field(0, ge=0, description="Garantia em meses")
     supplier_id: str = Field(..., description="ID do Fornecedor (UUID)")
 
 class ConfigUpdateRequest(BaseModel):
@@ -37,6 +38,9 @@ class ConfigUpdateRequest(BaseModel):
 class ManualProductSellRequest(BaseModel):
     quantity: int = Field(..., gt=0, description="Quantidade vendida")
     unit_price: Optional[float] = Field(None, ge=0.0, description="Preco unitario praticado na venda")
+
+class SaleStatusUpdateRequest(BaseModel):
+    status: str = Field(..., description="Novo status da venda: completed, returned, replaced")
 
 # --- Routes ---
 
@@ -104,6 +108,7 @@ async def list_manual_products(db: AsyncSession = Depends(get_db)):
                 "price_type": r.ManualProduct.price_type,
                 "category": r.ManualProduct.category,
                 "subcategory": r.ManualProduct.subcategory or "",
+                "warranty_months": r.ManualProduct.warranty_months,
                 "supplier_id": str(r.ManualProduct.supplier_id),
                 "supplier_name": r.supplier_name or "Desconhecido",
                 "created_at": r.ManualProduct.created_at.isoformat()
@@ -117,7 +122,7 @@ async def list_manual_products(db: AsyncSession = Depends(get_db)):
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_manual_product(payload: ManualProductCreate, db: AsyncSession = Depends(get_db)):
     """
-    Cadastra um novo produto manual, calculando os totais com base nas regras de preco.
+    Cadastra um novo produto manual, calculando os totais com base nas regras de preco e registrando a garantia.
     """
     try:
         # Validate supplier existence
@@ -151,6 +156,7 @@ async def create_manual_product(payload: ManualProductCreate, db: AsyncSession =
             price_type=price_type_clean,
             category=payload.category.strip(),
             subcategory=payload.subcategory.strip() if payload.subcategory else None,
+            warranty_months=payload.warranty_months,
             supplier_id=supplier_uuid
         )
         
@@ -186,7 +192,7 @@ async def delete_manual_product(product_id: str, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=500, detail="Erro interno ao remover produto.")
 
 
-# 3. Product Sales
+# 3. Product Sales & Returns
 
 @router.post("/{product_id}/sell", status_code=status.HTTP_200_OK)
 async def sell_manual_product(product_id: str, payload: ManualProductSellRequest, db: AsyncSession = Depends(get_db)):
@@ -231,7 +237,8 @@ async def sell_manual_product(product_id: str, payload: ManualProductSellRequest
             product_id=prod_uuid,
             quantity=payload.quantity,
             unit_price=sold_price,
-            total_value=sale_total
+            total_value=sale_total,
+            status="completed"
         )
         
         db.add(db_sale)
@@ -271,6 +278,7 @@ async def list_sales(db: AsyncSession = Depends(get_db)):
                 "quantity": r.ManualSale.quantity,
                 "unit_price": r.ManualSale.unit_price,
                 "total_value": r.ManualSale.total_value,
+                "status": r.ManualSale.status,
                 "sold_at": r.ManualSale.sold_at.isoformat()
             }
             for r in rows
@@ -278,6 +286,79 @@ async def list_sales(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"Erro ao listar vendas: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro ao buscar historico de vendas.")
+
+@router.post("/sales/{sale_id}/status", status_code=status.HTTP_200_OK)
+async def update_sale_status(sale_id: str, payload: SaleStatusUpdateRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Altera o status de uma venda (concluida, devolvida, trocada). 
+    Realiza o estorno de estoque caso a venda seja cancelada/devolvida.
+    """
+    try:
+        sale_uuid = uuid.UUID(sale_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de venda invalido.")
+        
+    new_status = payload.status.strip().lower()
+    if new_status not in ["completed", "returned", "replaced"]:
+        raise HTTPException(status_code=400, detail="Status invalido. Escolha entre: completed, returned, replaced.")
+        
+    try:
+        # Fetch sale
+        sale_stmt = select(ManualSale).where(ManualSale.id == sale_uuid)
+        sale_res = await db.execute(sale_stmt)
+        sale = sale_res.scalar_one_or_none()
+        if not sale:
+            raise HTTPException(status_code=404, detail="Venda nao encontrada.")
+            
+        # Fetch product
+        prod_stmt = select(ManualProduct).where(ManualProduct.id == sale.product_id)
+        prod_res = await db.execute(prod_stmt)
+        product = prod_res.scalar_one_or_none()
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto associado a venda nao foi encontrado.")
+            
+        old_status = sale.status
+        if old_status == new_status:
+            return {"status": "success", "message": "Nenhuma mudanca de status necessaria.", "current_status": sale.status}
+            
+        # Stock adjustment logic
+        # 1. Devolução de estoque (estorno de venda): mudando de faturamento (completed/replaced) para devolvido (returned)
+        if old_status in ["completed", "replaced"] and new_status == "returned":
+            product.quantity += sale.quantity
+            
+        # 2. Nova saída (cancelando estorno): mudando de devolvido (returned) de volta para faturado (completed/replaced)
+        elif old_status == "returned" and new_status in ["completed", "replaced"]:
+            if product.quantity < sale.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Estoque insuficiente para re-faturamento. Disponivel no produto: {product.quantity} unidades."
+                )
+            product.quantity -= sale.quantity
+            
+        # Recalculate total value for product in stock
+        if product.price_type == "brinde":
+            product.total_value = 0.0
+        else:
+            tot = (product.quantity * product.unit_value) - product.discount
+            product.total_value = tot if tot > 0.0 else 0.0
+            
+        # Update sale status
+        sale.status = new_status
+        await db.commit()
+        await db.refresh(sale)
+        await db.refresh(product)
+        
+        return {
+            "status": "success",
+            "message": f"Status da venda atualizado para '{new_status}' com sucesso.",
+            "sale_status": sale.status,
+            "remaining_stock": product.quantity
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao alterar status da venda: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno ao alterar status.")
 
 
 # 4. System Configuration (Credits and Goals)
@@ -363,9 +444,13 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
         total_value = 0.0
         total_discount = 0.0
         
-        # KPI Aggregates for Sales
-        total_sales_value = sum(s.total_value for s in sales)
-        total_sales_quantity = sum(s.quantity for s in sales)
+        # KPI Aggregates for Sales (excludes returned/canceled sales from active revenue)
+        total_sales_value = sum(s.total_value for s in sales if s.status != "returned")
+        total_sales_quantity = sum(s.quantity for s in sales if s.status != "returned")
+        
+        # KPI Aggregates for Returns (for reporting)
+        total_returned_value = sum(s.total_value for s in sales if s.status == "returned")
+        total_returned_quantity = sum(s.quantity for s in sales if s.status == "returned")
         
         # Categorized metrics maps
         qty_by_cat = {}
@@ -397,7 +482,7 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
             qty_by_type[ptype] = qty_by_type.get(ptype, 0) + p.quantity
             val_by_type[ptype] = val_by_type.get(ptype, 0.0) + p.total_value
 
-        # Calculate sales target progress (Total Revenue / Meta)
+        # Calculate sales target progress (Total Active Revenue / Meta)
         meta_progress = (total_sales_value / meta * 100.0) if meta > 0.0 else 0.0
         
         # Format breakdown lists for the frontend
@@ -423,6 +508,8 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
                 "meta": meta,
                 "total_sales_value": total_sales_value,
                 "total_sales_quantity": total_sales_quantity,
+                "total_returned_value": total_returned_value,
+                "total_returned_quantity": total_returned_quantity,
                 "meta_progress_percentage": round(meta_progress, 2)
             },
             "by_category": category_breakdown,

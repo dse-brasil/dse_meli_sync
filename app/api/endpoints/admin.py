@@ -937,7 +937,7 @@ async def serve_dashboard(request: Request):
                 </div>
                 <div>
                     <h1 class="brand-title">DSE Meli Sync</h1>
-                    <span style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">Versão 1.1.0</span>
+                    <span style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">Versão 1.2.0</span>
                 </div>
             </div>
             
@@ -974,7 +974,7 @@ async def serve_dashboard(request: Request):
                     <span style="color: white; font-weight: 600;">ONLINE</span>
                 </div>
             </div>
-            <span style="font-size: 10px; color: var(--text-secondary);">Desenv. por Data Science Enthusiasts</span>
+            <span style="font-size: 10px; color: var(--text-secondary);">Dev. por Data Science Enthusiasts</span>
         </div>
     </div>
 
@@ -1313,16 +1313,16 @@ async def serve_dashboard(request: Request):
                                 <input type="text" id="prod-subcategory" class="form-input" placeholder="Ex: Smartphones">
                             </div>
                             <div class="form-group">
+                                <label for="prod-warranty">Garantia (Meses)</label>
+                                <input type="number" id="prod-warranty" class="form-input" value="0" min="0" required>
+                            </div>
+                            <div class="form-group">
                                 <label for="prod-quantity">Quantidade</label>
                                 <input type="number" id="prod-quantity" class="form-input" value="1" min="1" oninput="updateTotalPreview()" required>
                             </div>
                             <div class="form-group">
                                 <label for="prod-unit-value">Valor Unitário (R$)</label>
                                 <input type="number" id="prod-unit-value" class="form-input" step="0.01" value="0.00" min="0.00" oninput="updateTotalPreview()" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="prod-discount">Desconto Total (R$)</label>
-                                <input type="number" id="prod-discount" class="form-input" step="0.01" value="0.00" min="0.00" oninput="updateTotalPreview()">
                             </div>
                         </div>
 
@@ -1338,6 +1338,13 @@ async def serve_dashboard(request: Request):
                             <div class="form-group">
                                 <label for="prod-description">Descrição do Produto</label>
                                 <input type="text" id="prod-description" class="form-input" placeholder="Ex: Smartphone DSE Pro 128GB" required>
+                            </div>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="prod-discount">Desconto Total (R$)</label>
+                                <input type="number" id="prod-discount" class="form-input" step="0.01" value="0.00" min="0.00" oninput="updateTotalPreview()">
                             </div>
                         </div>
 
@@ -1364,6 +1371,7 @@ async def serve_dashboard(request: Request):
                                     <th>Desconto</th>
                                     <th>Total Estoque</th>
                                     <th>Tipo Preço</th>
+                                    <th>Garantia</th>
                                     <th>Fornecedor</th>
                                     <th>Ações</th>
                                 </tr>
@@ -1376,7 +1384,7 @@ async def serve_dashboard(request: Request):
                 </div>
             </div>
 
-            <!-- VIEW: ANALYTICS (NEW!) -->
+            <!-- VIEW: ANALYTICS -->
             <div id="panel-analytics" class="view-panel">
                 
                 <!-- Target Settings Row -->
@@ -1544,12 +1552,15 @@ async def serve_dashboard(request: Request):
                     </div>
                 </div>
 
-                <!-- SALES HISTORY LOG (NEW!) -->
+                <!-- SALES HISTORY LOG WITH ACTIONS -->
                 <div class="glass-card" style="margin-top: 24px;">
-                    <div class="card-header">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 10px;">
                         <h3 class="card-title" style="color: #22c55e;"><i class="fa-solid fa-receipt"></i> Histórico Recente de Vendas (Baixas de Estoque)</h3>
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);" id="analytics-returns-summary">
+                            Devoluções/Estornos: 0 itens (R$ 0,00)
+                        </span>
                     </div>
-                    <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+                    <div class="table-container" style="max-height: 350px; overflow-y: auto;">
                         <table>
                             <thead>
                                 <tr>
@@ -1558,6 +1569,8 @@ async def serve_dashboard(request: Request):
                                     <th>Quantidade</th>
                                     <th>Preço Unitário</th>
                                     <th>Faturamento da Venda</th>
+                                    <th>Status</th>
+                                    <th>Ações de Ciclo de Vida</th>
                                 </tr>
                             </thead>
                             <tbody id="analytics-sales-history-tbody">
@@ -1590,19 +1603,16 @@ async def serve_dashboard(request: Request):
     <script>
         // Tab switching logic
         function switchTab(tabId, menuItem) {
-            // Update active menu item
             document.querySelectorAll('.menu-item').forEach(item => {
                 item.classList.remove('active');
             });
             menuItem.classList.add('active');
 
-            // Update visible panel
             document.querySelectorAll('.view-panel').forEach(panel => {
                 panel.classList.remove('active');
             });
             document.getElementById('panel-' + tabId).classList.add('active');
 
-            // Update header title
             const titles = {
                 'dashboard': 'Painel de Monitoramento',
                 'webhooks': 'Monitor de Webhooks',
@@ -1614,7 +1624,6 @@ async def serve_dashboard(request: Request):
             };
             document.getElementById('panel-title').innerText = titles[tabId];
             
-            // Reload specific tab data
             if (tabId === 'manual') {
                 loadManualTabData();
             } else if (tabId === 'analytics') {
@@ -1924,9 +1933,9 @@ async def serve_dashboard(request: Request):
         }
 
 
-        // ==========================================
-        // --- MANUAL PRODUCTS & SUPPLIERS & SALES ---
-        // ==========================================
+        // ==================================================
+        // --- MANUAL PRODUCTS & SUPPLIERS & LIFE CYCLES ---
+        // ==================================================
 
         // Calculate and update the estimated total value dynamically in form
         function updateTotalPreview() {
@@ -2021,13 +2030,14 @@ async def serve_dashboard(request: Request):
                 tbody.innerHTML = '';
 
                 if (products.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum produto cadastrado manualmente no estoque.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: var(--text-secondary); padding: 20px;">Nenhum produto cadastrado manualmente no estoque.</td></tr>';
                     return;
                 }
 
                 products.forEach(item => {
                     const typeBadge = item.price_type === 'consignado' ? 'badge-info' : (item.price_type === 'brinde' ? 'badge-warning' : 'badge-success');
-                    
+                    const warrantyText = item.warranty_months > 0 ? `${item.warranty_months} meses` : 'Sem garantia';
+
                     const row = `
                         <tr>
                             <td style="font-family: monospace; font-size: 12px; color: var(--text-secondary);">${item.barcode}</td>
@@ -2038,6 +2048,7 @@ async def serve_dashboard(request: Request):
                             <td style="color: var(--danger);">R$ ${item.discount.toFixed(2)}</td>
                             <td style="color: var(--success); font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
                             <td><span class="badge ${typeBadge}">${item.price_type.toUpperCase()}</span></td>
+                            <td style="color: #cbd5e1; font-weight: 600; font-size: 13px;">${warrantyText}</td>
                             <td style="color: var(--text-secondary); font-size: 13px;">${item.supplier_name}</td>
                             <td>
                                 <div style="display: flex; gap: 8px;">
@@ -2070,6 +2081,7 @@ async def serve_dashboard(request: Request):
             const discount = parseFloat(document.getElementById('prod-discount').value) || 0.0;
             const priceType = document.getElementById('prod-price-type').value;
             const description = document.getElementById('prod-description').value.trim();
+            const warranty = parseInt(document.getElementById('prod-warranty').value) || 0;
 
             if (!supplierId) {
                 alert("Por favor, selecione um Fornecedor cadastrado.");
@@ -2086,7 +2098,8 @@ async def serve_dashboard(request: Request):
                 unit_value: unitValue,
                 discount: discount,
                 price_type: priceType,
-                description: description
+                description: description,
+                warranty_months: warranty
             };
 
             try {
@@ -2163,6 +2176,38 @@ async def serve_dashboard(request: Request):
             }
         }
 
+        // Change sale status (return / exchange / complete)
+        async function changeSaleStatus(saleId, newStatus) {
+            const descriptions = {
+                'completed': 'marcar como CONCLUÍDA (restaura dedução de estoque)',
+                'returned': 'marcar como DEVOLVIDA / CANCELADA (estorna itens de volta para o estoque)',
+                'replaced': 'marcar como TROCADA (indica substituição física em garantia)'
+            };
+
+            if (!confirm(`Deseja alterar o status desta venda? Ação: ${descriptions[newStatus].toUpperCase()}`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/manual-products/sales/${saleId}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                const resData = await response.json();
+                if (response.ok) {
+                    alert(resData.message);
+                    await fetchManualProducts();
+                    await loadAnalyticsTabData();
+                } else {
+                    alert("Falha ao ajustar status: " + (resData.detail || "Erro desconhecido"));
+                }
+            } catch (err) {
+                alert("Erro ao comunicar com o servidor.");
+            }
+        }
+
         // Delete Manual Product
         async function deleteManualProduct(productId) {
             if (!confirm("Tem certeza de que deseja excluir este produto do estoque manual?")) {
@@ -2232,19 +2277,54 @@ async def serve_dashboard(request: Request):
                 tbody.innerHTML = '';
 
                 if (sales.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 15px;">Nenhuma baixa ou venda efetuada ainda.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 15px;">Nenhuma baixa ou venda efetuada ainda.</td></tr>';
                     return;
                 }
 
                 sales.forEach(item => {
                     const formattedDate = new Date(item.sold_at).toLocaleString('pt-BR');
+                    
+                    let statusBadge = '';
+                    let actionButtons = '';
+                    
+                    if (item.status === 'completed') {
+                        statusBadge = '<span class="badge badge-success">CONCLUÍDA</span>';
+                        actionButtons = `
+                            <button class="btn btn-warning" style="padding: 6px 10px; font-size: 11px; margin-right:4px;" onclick="changeSaleStatus('${item.id}', 'replaced')">
+                                <i class="fa-solid fa-arrows-rotate"></i> Trocar
+                            </button>
+                            <button class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="changeSaleStatus('${item.id}', 'returned')">
+                                <i class="fa-solid fa-rotate-left"></i> Devolver
+                            </button>
+                        `;
+                    } else if (item.status === 'replaced') {
+                        statusBadge = '<span class="badge badge-warning">TROCADA</span>';
+                        actionButtons = `
+                            <button class="btn btn-primary" style="padding: 6px 10px; font-size: 11px; margin-right:4px;" onclick="changeSaleStatus('${item.id}', 'completed')">
+                                <i class="fa-solid fa-check"></i> Concluir
+                            </button>
+                            <button class="btn btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="changeSaleStatus('${item.id}', 'returned')">
+                                <i class="fa-solid fa-rotate-left"></i> Devolver
+                            </button>
+                        `;
+                    } else if (item.status === 'returned') {
+                        statusBadge = '<span class="badge badge-danger">DEVOLVIDA</span>';
+                        actionButtons = `
+                            <button class="btn btn-primary" style="padding: 6px 10px; font-size: 11px;" onclick="changeSaleStatus('${item.id}', 'completed')">
+                                <i class="fa-solid fa-check"></i> Re-Faturar
+                            </button>
+                        `;
+                    }
+
                     tbody.innerHTML += `
                         <tr>
                             <td style="color: var(--text-secondary); font-size: 13px;">${formattedDate}</td>
                             <td style="font-weight: 600;">${item.product_description}</td>
                             <td><strong>${item.quantity}</strong></td>
                             <td>R$ ${item.unit_price.toFixed(2)}</td>
-                            <td style="color: #22c55e; font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
+                            <td style="color: #cbd5e1; font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
+                            <td>${statusBadge}</td>
+                            <td><div style="display: flex;">${actionButtons}</div></td>
                         </tr>
                     `;
                 });
@@ -2268,10 +2348,15 @@ async def serve_dashboard(request: Request):
                 document.getElementById('analytics-total-discount').innerText = `R$ ${data.summary.total_discount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('analytics-credits').innerText = `R$ ${data.summary.credits.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
-                // Sales numbers
+                // Active Sales numbers (excluding returned)
                 document.getElementById('analytics-total-sales').innerText = `R$ ${data.summary.total_sales_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('analytics-sales-qty').innerText = data.summary.total_sales_quantity;
                 
+                // Returns Summary label
+                const returnsCount = data.summary.total_returned_quantity || 0;
+                const returnsVal = data.summary.total_returned_value || 0.0;
+                document.getElementById('analytics-returns-summary').innerText = `Devoluções/Estornos: ${returnsCount} itens | R$ ${returnsVal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
                 // Meta Tracking text
                 document.getElementById('analytics-meta-progress-text').innerText = `${data.summary.meta_progress_percentage}% atingido`;
                 document.getElementById('analytics-meta-current').innerText = `R$ ${data.summary.total_sales_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
@@ -2281,7 +2366,7 @@ async def serve_dashboard(request: Request):
                 const progressFill = Math.min(data.summary.meta_progress_percentage, 100);
                 document.getElementById('analytics-meta-progress-bar').style.width = `${progressFill}%`;
 
-                // Render Categories distribution Table
+                // Render Categories Table
                 const catTbody = document.getElementById('analytics-category-tbody');
                 catTbody.innerHTML = '';
                 if (data.by_category.length === 0) {
@@ -2298,7 +2383,7 @@ async def serve_dashboard(request: Request):
                     });
                 }
 
-                // Render Subcategories distribution Table
+                // Render Subcategories Table
                 const subTbody = document.getElementById('analytics-subcategory-tbody');
                 subTbody.innerHTML = '';
                 if (data.by_subcategory.length === 0) {
@@ -2315,7 +2400,7 @@ async def serve_dashboard(request: Request):
                     });
                 }
 
-                // Render Price Type distribution Table
+                // Render Price Type Table
                 const typeTbody = document.getElementById('analytics-type-tbody');
                 typeTbody.innerHTML = '';
                 if (data.by_price_type.length === 0) {
@@ -2358,7 +2443,6 @@ async def serve_dashboard(request: Request):
             loadAnalyticsTabData();
         }
 
-        // Initialize on load
         window.onload = function() {
             loadAllData();
             setInterval(fetchStats, 10000);

@@ -64,6 +64,7 @@ class ManualProduct(Base):
     price_type = Column(String(50), default="normal", nullable=False)  # 'consignado', 'brinde', 'normal'
     category = Column(String(100), nullable=False, index=True)
     subcategory = Column(String(100), nullable=True, index=True)
+    warranty_months = Column(Integer, default=0, nullable=False)  # Prazo de garantia em meses
     
     supplier_id = Column(UUID(as_uuid=True), ForeignKey("suppliers.id", ondelete="CASCADE"), nullable=False)
     supplier = relationship("Supplier", back_populates="products")
@@ -86,7 +87,7 @@ class ManualSale(Base):
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Float, nullable=False)
     total_value = Column(Float, nullable=False)
+    status = Column(String(50), default="completed", nullable=False)  # 'completed', 'returned', 'replaced'
     sold_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     product = relationship("ManualProduct")
-
