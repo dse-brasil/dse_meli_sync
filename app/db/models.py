@@ -77,3 +77,16 @@ class SystemConfig(Base):
     key = Column(String(50), primary_key=True)  # 'credits', 'meta'
     value = Column(Float, default=0.0, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+class ManualSale(Base):
+    __tablename__ = "manual_sales"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    product_id = Column(UUID(as_uuid=True), ForeignKey("manual_products.id", ondelete="CASCADE"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Float, nullable=False)
+    total_value = Column(Float, nullable=False)
+    sold_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    product = relationship("ManualProduct")
+

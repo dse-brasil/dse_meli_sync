@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
 from app.db.session import get_db
-from app.db.models import Supplier, ManualProduct, SystemConfig
+from app.db.models import Supplier, ManualProduct, SystemConfig, ManualSale
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -33,6 +33,10 @@ class ManualProductCreate(BaseModel):
 class ConfigUpdateRequest(BaseModel):
     credits: float = Field(..., ge=0.0, description="Creditos disponiveis")
     meta: float = Field(..., ge=0.0, description="Meta do painel")
+
+class ManualProductSellRequest(BaseModel):
+    quantity: int = Field(..., gt=0, description="Quantidade vendida")
+    unit_price: Optional[float] = Field(None, ge=0.0, description="Preco unitario praticado na venda")
 
 # --- Routes ---
 
@@ -79,7 +83,6 @@ async def list_manual_products(db: AsyncSession = Depends(get_db)):
     Lista todos os produtos cadastrados manualmente com o nome do fornecedor associado.
     """
     try:
-        # Join ManualProduct with Supplier to fetch supplier name
         stmt = (
             select(ManualProduct, Supplier.name.label("supplier_name"))
             .join(Supplier, ManualProduct.supplier_id == Supplier.id, isouter=True)
@@ -125,8 +128,6 @@ async def create_manual_product(payload: ManualProductCreate, db: AsyncSession =
             raise HTTPException(status_code=404, detail="Fornecedor nao encontrado.")
             
         # Calculation logic
-        # Valor Total = (Quantidade * Valor Unitario) - Desconto
-        # Se for 'brinde', o total_value e zero e o unit_value e forcado a 0
         price_type_clean = payload.price_type.strip().lower()
         if price_type_clean == "brinde":
             unit_val = 0.0
@@ -185,7 +186,101 @@ async def delete_manual_product(product_id: str, db: AsyncSession = Depends(get_
         raise HTTPException(status_code=500, detail="Erro interno ao remover produto.")
 
 
-# 3. System Configuration (Credits and Goals)
+# 3. Product Sales
+
+@router.post("/{product_id}/sell", status_code=status.HTTP_200_OK)
+async def sell_manual_product(product_id: str, payload: ManualProductSellRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Registra a venda de uma determinada quantidade de um item, dando baixa no estoque local.
+    """
+    try:
+        prod_uuid = uuid.UUID(product_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de produto invalido.")
+        
+    try:
+        # Fetch product
+        stmt = select(ManualProduct).where(ManualProduct.id == prod_uuid)
+        res = await db.execute(stmt)
+        product = res.scalar_one_or_none()
+        
+        if not product:
+            raise HTTPException(status_code=404, detail="Produto nao encontrado no estoque.")
+            
+        if product.quantity < payload.quantity:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Estoque insuficiente. Estoque disponivel para venda: {product.quantity}"
+            )
+            
+        # Deduct quantity
+        product.quantity -= payload.quantity
+        
+        # Recalculate total value
+        if product.price_type == "brinde":
+            product.total_value = 0.0
+        else:
+            tot = (product.quantity * product.unit_value) - product.discount
+            product.total_value = tot if tot > 0.0 else 0.0
+            
+        # Register Sale
+        sold_price = payload.unit_price if payload.unit_price is not None else product.unit_value
+        sale_total = payload.quantity * sold_price
+        
+        db_sale = ManualSale(
+            product_id=prod_uuid,
+            quantity=payload.quantity,
+            unit_price=sold_price,
+            total_value=sale_total
+        )
+        
+        db.add(db_sale)
+        await db.commit()
+        await db.refresh(product)
+        
+        return {
+            "status": "success",
+            "message": f"Baixa concluida: {payload.quantity} unidades de '{product.description}' vendidas por R$ {sale_total:.2f}.",
+            "remaining_stock": product.quantity
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro ao processar venda: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno ao registrar venda.")
+
+@router.get("/sales", status_code=status.HTTP_200_OK)
+async def list_sales(db: AsyncSession = Depends(get_db)):
+    """
+    Lista o historico das ultimas 50 vendas registradas.
+    """
+    try:
+        stmt = (
+            select(ManualSale, ManualProduct.description.label("product_description"))
+            .join(ManualProduct, ManualSale.product_id == ManualProduct.id, isouter=True)
+            .order_by(ManualSale.sold_at.desc())
+            .limit(50)
+        )
+        res = await db.execute(stmt)
+        rows = res.all()
+        return [
+            {
+                "id": str(r.ManualSale.id),
+                "product_id": str(r.ManualSale.product_id),
+                "product_description": r.product_description or "Produto Removido",
+                "quantity": r.ManualSale.quantity,
+                "unit_price": r.ManualSale.unit_price,
+                "total_value": r.ManualSale.total_value,
+                "sold_at": r.ManualSale.sold_at.isoformat()
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Erro ao listar vendas: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro ao buscar historico de vendas.")
+
+
+# 4. System Configuration (Credits and Goals)
 
 @router.get("/config", status_code=status.HTTP_200_OK)
 async def get_system_config(db: AsyncSession = Depends(get_db)):
@@ -238,18 +333,23 @@ async def update_system_config(payload: ConfigUpdateRequest, db: AsyncSession = 
         raise HTTPException(status_code=500, detail="Erro ao salvar configuracoes.")
 
 
-# 4. Dashboard Analytics for Manual Products
+# 5. Dashboard Analytics for Manual Products
 
 @router.get("/analytics", status_code=status.HTTP_200_OK)
 async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
     """
-    Executa calculos de aggregacao sobre o estoque manual e retorna os KPIs do Dashboard.
+    Executa calculos de aggregacao sobre o estoque manual e vendas, retornando os KPIs do Dashboard.
     """
     try:
         # Fetch all manual products
         stmt = select(ManualProduct)
         res = await db.execute(stmt)
         products = res.scalars().all()
+        
+        # Fetch all sales
+        sales_stmt = select(ManualSale)
+        sales_res = await db.execute(sales_stmt)
+        sales = sales_res.scalars().all()
         
         # Fetch config (credits and meta)
         cfg_stmt = select(SystemConfig)
@@ -258,10 +358,14 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
         credits = config_dict.get("credits", 0.0)
         meta = config_dict.get("meta", 0.0)
         
-        # KPI Aggregates
+        # KPI Aggregates for Inventory
         total_quantity = 0
         total_value = 0.0
         total_discount = 0.0
+        
+        # KPI Aggregates for Sales
+        total_sales_value = sum(s.total_value for s in sales)
+        total_sales_quantity = sum(s.quantity for s in sales)
         
         # Categorized metrics maps
         qty_by_cat = {}
@@ -293,8 +397,8 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
             qty_by_type[ptype] = qty_by_type.get(ptype, 0) + p.quantity
             val_by_type[ptype] = val_by_type.get(ptype, 0.0) + p.total_value
 
-        # Calculate goals percentage
-        meta_progress = (total_value / meta * 100.0) if meta > 0.0 else 0.0
+        # Calculate sales target progress (Total Revenue / Meta)
+        meta_progress = (total_sales_value / meta * 100.0) if meta > 0.0 else 0.0
         
         # Format breakdown lists for the frontend
         category_breakdown = [
@@ -317,6 +421,8 @@ async def get_manual_analytics(db: AsyncSession = Depends(get_db)):
                 "total_discount": total_discount,
                 "credits": credits,
                 "meta": meta,
+                "total_sales_value": total_sales_value,
+                "total_sales_quantity": total_sales_quantity,
                 "meta_progress_percentage": round(meta_progress, 2)
             },
             "by_category": category_breakdown,

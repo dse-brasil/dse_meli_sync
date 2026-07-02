@@ -937,7 +937,7 @@ async def serve_dashboard(request: Request):
                 </div>
                 <div>
                     <h1 class="brand-title">DSE Meli Sync</h1>
-                    <span style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">Versão 1.0.0</span>
+                    <span style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">Versão 1.1.0</span>
                 </div>
             </div>
             
@@ -1233,7 +1233,7 @@ async def serve_dashboard(request: Request):
                 </div>
             </div>
 
-            <!-- VIEW: CADASTRO MANUAL (NEW!) -->
+            <!-- VIEW: CADASTRO MANUAL -->
             <div id="panel-manual" class="view-panel">
                 
                 <!-- Supplier Form & List Section -->
@@ -1362,7 +1362,7 @@ async def serve_dashboard(request: Request):
                                     <th>Qtd.</th>
                                     <th>V. Unitário</th>
                                     <th>Desconto</th>
-                                    <th>Total</th>
+                                    <th>Total Estoque</th>
                                     <th>Tipo Preço</th>
                                     <th>Fornecedor</th>
                                     <th>Ações</th>
@@ -1402,8 +1402,8 @@ async def serve_dashboard(request: Request):
                     </div>
                 </div>
 
-                <!-- Metrics KPIs -->
-                <div class="grid-stats">
+                <!-- Metrics KPIs (6 columns layout) -->
+                <div class="grid-stats" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
                     <div class="stat-card">
                         <div>
                             <span class="stat-label">Qtd Total Itens</span>
@@ -1415,7 +1415,7 @@ async def serve_dashboard(request: Request):
                     </div>
                     <div class="stat-card">
                         <div>
-                            <span class="stat-label">Valor Total (Net)</span>
+                            <span class="stat-label">Val Estoque (Net)</span>
                             <div class="stat-value" id="analytics-total-val" style="color: var(--success);">R$ 0,00</div>
                         </div>
                         <div class="stat-icon green">
@@ -1424,7 +1424,7 @@ async def serve_dashboard(request: Request):
                     </div>
                     <div class="stat-card">
                         <div>
-                            <span class="stat-label">Descontos Aplicados</span>
+                            <span class="stat-label">Descontos Estoque</span>
                             <div class="stat-value" id="analytics-total-discount" style="color: var(--warning);">R$ 0,00</div>
                         </div>
                         <div class="stat-icon yellow">
@@ -1433,10 +1433,28 @@ async def serve_dashboard(request: Request):
                     </div>
                     <div class="stat-card">
                         <div>
-                            <span class="stat-label">Créditos Ativos</span>
-                            <div class="stat-value" id="analytics-credits" style="color: var(--accent-secondary);">R$ 0,00</div>
+                            <span class="stat-label">Faturamento Total</span>
+                            <div class="stat-value" id="analytics-total-sales" style="color: #22c55e; font-weight: 800;">R$ 0,00</div>
+                        </div>
+                        <div class="stat-icon green" style="background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3);">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Itens Vendidos</span>
+                            <div class="stat-value" id="analytics-sales-qty" style="color: var(--accent-secondary);">0</div>
                         </div>
                         <div class="stat-icon cyan">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <span class="stat-label">Créditos Ativos</span>
+                            <div class="stat-value" id="analytics-credits" style="color: var(--text-primary);">R$ 0,00</div>
+                        </div>
+                        <div class="stat-icon purple">
                             <i class="fa-solid fa-hand-holding-dollar"></i>
                         </div>
                     </div>
@@ -1445,12 +1463,12 @@ async def serve_dashboard(request: Request):
                 <!-- Meta Progress Card -->
                 <div class="glass-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                        <span class="stat-label" style="font-weight: 700;">Acompanhamento de Meta de Estoque / Vendas</span>
+                        <span class="stat-label" style="font-weight: 700;">Acompanhamento de Meta de Faturamento de Vendas</span>
                         <span id="analytics-meta-progress-text" style="font-weight: 700; color: var(--accent-secondary);">0% atingido</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                        <span>Atual: <strong id="analytics-meta-current" style="color: white;">R$ 0,00</strong></span>
-                        <span>Meta Alvo: <strong id="analytics-meta-target" style="color: white;">R$ 0,00</strong></span>
+                        <span>Faturado: <strong id="analytics-meta-current" style="color: white;">R$ 0,00</strong></span>
+                        <span>Meta de Vendas: <strong id="analytics-meta-target" style="color: white;">R$ 0,00</strong></span>
                     </div>
                     <div class="progress-wrapper">
                         <div class="progress-bar-bg">
@@ -1507,7 +1525,7 @@ async def serve_dashboard(request: Request):
                 <!-- Price Type distribution -->
                 <div class="glass-card">
                     <div class="card-header">
-                        <h3 class="card-title"><i class="fa-solid fa-receipt"></i> Métricas por Tipo de Preço</h3>
+                        <h3 class="card-title"><i class="fa-solid fa-receipt"></i> Métricas por Tipo de Preço (Estoque)</h3>
                     </div>
                     <div class="table-container">
                         <table>
@@ -1520,6 +1538,29 @@ async def serve_dashboard(request: Request):
                                 </tr>
                             </thead>
                             <tbody id="analytics-type-tbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SALES HISTORY LOG (NEW!) -->
+                <div class="glass-card" style="margin-top: 24px;">
+                    <div class="card-header">
+                        <h3 class="card-title" style="color: #22c55e;"><i class="fa-solid fa-receipt"></i> Histórico Recente de Vendas (Baixas de Estoque)</h3>
+                    </div>
+                    <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Data / Hora</th>
+                                    <th>Descrição do Produto</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço Unitário</th>
+                                    <th>Faturamento da Venda</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analytics-sales-history-tbody">
                                 <!-- Populated dynamically -->
                             </tbody>
                         </table>
@@ -1592,7 +1633,6 @@ async def serve_dashboard(request: Request):
                 document.getElementById('stats-webhooks-failed').innerText = data.webhook_status?.failed || 0;
                 document.getElementById('stats-total-products').innerText = data.total_products || 0;
                 
-                // Set channel integration statuses
                 const meliStatus = document.getElementById('status-meli');
                 if (data.meli_authenticated) {
                     meliStatus.innerText = 'CONECTADO';
@@ -1622,7 +1662,6 @@ async def serve_dashboard(request: Request):
                 tbodyDashboard.innerHTML = '';
 
                 webhooks.forEach((item, index) => {
-                    // Row for full list
                     const badgeClass = item.status === 'processed' ? 'badge-success' : (item.status === 'failed' ? 'badge-danger' : 'badge-info');
                     const formattedDate = new Date(item.created_at).toLocaleString('pt-BR');
                     
@@ -1641,7 +1680,6 @@ async def serve_dashboard(request: Request):
                     `;
                     tbodyFull.innerHTML += rowFull;
 
-                    // Row for dashboard summary (first 5 items)
                     if (index < 5) {
                         const rowDash = `
                             <tr>
@@ -1682,7 +1720,6 @@ async def serve_dashboard(request: Request):
                 alerts.forEach(item => {
                     const formattedDate = new Date(item.created_at).toLocaleString('pt-BR');
                     
-                    // Identify if signature or injection based on text
                     let category = 'Ataque de Injeção';
                     let badgeColor = 'badge-danger';
                     if (item.error_message.includes('signature')) {
@@ -1755,13 +1792,11 @@ async def serve_dashboard(request: Request):
             const messageText = input.value.trim();
             if (!messageText) return;
 
-            // Clear input
             input.value = '';
 
             const container = document.getElementById('chat-messages-container');
             const feedback = document.getElementById('chat-security-feedback');
 
-            // 1. Add User Message bubble
             const userMsgHtml = `
                 <div class="msg buyer">
                     <div class="msg-bubble">${messageText}</div>
@@ -1771,14 +1806,12 @@ async def serve_dashboard(request: Request):
             container.innerHTML += userMsgHtml;
             container.scrollTop = container.scrollHeight;
 
-            // 2. Scan for Injection locally just to show visual feedback (FastAPI will block it anyway)
             feedback.innerHTML = `
                 <div class="security-scan-indicator">
                     <i class="fa-solid fa-spinner fa-spin"></i> Guardrail analisando entrada contra injeções...
                 </div>
             `;
 
-            // Prepare Request body
             const buyerId = document.getElementById('chat-buyer-id').value;
             const itemId = document.getElementById('chat-item-id').value;
 
@@ -1796,7 +1829,6 @@ async def serve_dashboard(request: Request):
                 const data = await response.json();
 
                 if (response.status === 400) {
-                    // Blocked by injection guardrail!
                     feedback.innerHTML = `
                         <div class="security-scan-indicator alert">
                             <i class="fa-solid fa-shield-virus"></i> Injeção Detectada! O Guardrail bloqueou a mensagem.
@@ -1814,7 +1846,6 @@ async def serve_dashboard(request: Request):
                 } else if (!response.ok) {
                     throw new Error("API Error");
                 } else {
-                    // Success response
                     feedback.innerHTML = `
                         <div class="security-scan-indicator">
                             <i class="fa-solid fa-shield-halved"></i> Guardrails de entrada e saída validados com sucesso (Conformidade 100%)
@@ -1844,12 +1875,10 @@ async def serve_dashboard(request: Request):
 
             container.scrollTop = container.scrollHeight;
             
-            // Clear feedback after 4 seconds
             setTimeout(() => {
                 feedback.innerHTML = '';
             }, 4000);
 
-            // Reload stats and webhooks as a conversation occurred
             fetchStats();
         }
 
@@ -1896,7 +1925,7 @@ async def serve_dashboard(request: Request):
 
 
         // ==========================================
-        // --- NEW! MANUAL PRODUCTS & SUPPLIERS JS ---
+        // --- MANUAL PRODUCTS & SUPPLIERS & SALES ---
         // ==========================================
 
         // Calculate and update the estimated total value dynamically in form
@@ -1931,7 +1960,6 @@ async def serve_dashboard(request: Request):
                 const selectElement = document.getElementById('prod-supplier');
                 
                 tableBody.innerHTML = '';
-                // Keep the default first option in the select dropdown
                 selectElement.innerHTML = '<option value="">Selecione um fornecedor...</option>';
 
                 if (suppliers.length === 0) {
@@ -1947,8 +1975,6 @@ async def serve_dashboard(request: Request):
                         </tr>
                     `;
                     tableBody.innerHTML += row;
-
-                    // Append to form dropdown select
                     selectElement.innerHTML += `<option value="${item.id}">${item.name}</option>`;
                 });
             } catch (err) {
@@ -2014,9 +2040,14 @@ async def serve_dashboard(request: Request):
                             <td><span class="badge ${typeBadge}">${item.price_type.toUpperCase()}</span></td>
                             <td style="color: var(--text-secondary); font-size: 13px;">${item.supplier_name}</td>
                             <td>
-                                <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="deleteManualProduct('${item.id}')">
-                                    <i class="fa-solid fa-trash"></i> Excluir
-                                </button>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-primary" style="padding: 6px 10px; font-size: 12px; background: linear-gradient(135deg, var(--accent-secondary) 0%, rgba(6, 182, 212, 0.6) 100%);" onclick="sellManualProductPrompt('${item.id}', '${item.description}', ${item.quantity}, ${item.unit_value})">
+                                        <i class="fa-solid fa-cart-shopping"></i> Vender
+                                    </button>
+                                    <button class="btn btn-danger" style="padding: 6px 10px; font-size: 12px;" onclick="deleteManualProduct('${item.id}')">
+                                        <i class="fa-solid fa-trash"></i> Excluir
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     `;
@@ -2066,13 +2097,66 @@ async def serve_dashboard(request: Request):
                 });
 
                 if (response.ok) {
-                    // Reset form
                     document.getElementById('manual-product-form').reset();
                     updateTotalPreview();
                     await fetchManualProducts();
                 } else {
                     const err = await response.json();
                     alert("Erro ao cadastrar produto: " + (err.detail || "Erro de rede"));
+                }
+            } catch (err) {
+                alert("Erro ao se conectar com o servidor.");
+            }
+        }
+
+        // Prompt user and submit sale
+        async function sellManualProductPrompt(productId, description, maxQty, defaultPrice) {
+            if (maxQty <= 0) {
+                alert("Este produto nao possui unidades no estoque para serem vendidas!");
+                return;
+            }
+
+            const qtyStr = prompt(`Registrar baixa por Venda para: ${description}\nEstoque Atual: ${maxQty}\n\nDigite a quantidade a ser vendida:`, "1");
+            if (qtyStr === null) return;
+            const qty = parseInt(qtyStr);
+            if (isNaN(qty) || qty <= 0) {
+                alert("Quantidade inserida invalida.");
+                return;
+            }
+            if (qty > maxQty) {
+                alert(`Quantidade indisponivel. O estoque atual e de apenas ${maxQty} unidades.`);
+                return;
+            }
+
+            const priceStr = prompt(`Digite o preco unitario cobrado na venda (R$):`, defaultPrice.toFixed(2));
+            if (priceStr === null) return;
+            const price = parseFloat(priceStr);
+            if (isNaN(price) || price < 0.0) {
+                alert("Preco inserido invalido.");
+                return;
+            }
+
+            const payload = {
+                quantity: qty,
+                unit_price: price
+            };
+
+            try {
+                const response = await fetch(`/api/v1/manual-products/${productId}/sell`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const resData = await response.json();
+                if (response.ok) {
+                    alert(resData.message);
+                    await fetchManualProducts();
+                    if (document.getElementById('panel-analytics').classList.contains('active')) {
+                        await loadAnalyticsTabData();
+                    }
+                } else {
+                    alert("Erro ao efetuar baixa: " + (resData.detail || "Erro desconhecido"));
                 }
             } catch (err) {
                 alert("Erro ao se conectar com o servidor.");
@@ -2139,9 +2223,40 @@ async def serve_dashboard(request: Request):
             }
         }
 
+        // Fetch sales history table
+        async function fetchSalesHistory() {
+            try {
+                const response = await fetch('/api/v1/manual-products/sales');
+                const sales = await response.json();
+                const tbody = document.getElementById('analytics-sales-history-tbody');
+                tbody.innerHTML = '';
+
+                if (sales.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 15px;">Nenhuma baixa ou venda efetuada ainda.</td></tr>';
+                    return;
+                }
+
+                sales.forEach(item => {
+                    const formattedDate = new Date(item.sold_at).toLocaleString('pt-BR');
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="color: var(--text-secondary); font-size: 13px;">${formattedDate}</td>
+                            <td style="font-weight: 600;">${item.product_description}</td>
+                            <td><strong>${item.quantity}</strong></td>
+                            <td>R$ ${item.unit_price.toFixed(2)}</td>
+                            <td style="color: #22c55e; font-weight: 700;">R$ ${item.total_value.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error fetching sales history:", err);
+            }
+        }
+
         // Load and compile advanced metrics
         async function loadAnalyticsTabData() {
             await fetchSystemConfig();
+            await fetchSalesHistory();
             
             try {
                 const response = await fetch('/api/v1/manual-products/analytics');
@@ -2153,9 +2268,13 @@ async def serve_dashboard(request: Request):
                 document.getElementById('analytics-total-discount').innerText = `R$ ${data.summary.total_discount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('analytics-credits').innerText = `R$ ${data.summary.credits.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
+                // Sales numbers
+                document.getElementById('analytics-total-sales').innerText = `R$ ${data.summary.total_sales_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('analytics-sales-qty').innerText = data.summary.total_sales_quantity;
+                
                 // Meta Tracking text
                 document.getElementById('analytics-meta-progress-text').innerText = `${data.summary.meta_progress_percentage}% atingido`;
-                document.getElementById('analytics-meta-current').innerText = `R$ ${data.summary.total_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById('analytics-meta-current').innerText = `R$ ${data.summary.total_sales_value.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 document.getElementById('analytics-meta-target').innerText = `R$ ${data.summary.meta.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                 
                 // Progress Bar fill
@@ -2242,7 +2361,6 @@ async def serve_dashboard(request: Request):
         // Initialize on load
         window.onload = function() {
             loadAllData();
-            // Automatically poll stats every 10 seconds for real-time monitoring
             setInterval(fetchStats, 10000);
             setInterval(fetchWebhooks, 15000);
         };
